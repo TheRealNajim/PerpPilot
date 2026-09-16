@@ -3,17 +3,27 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
-from .config import DEMO_MODE, NANSEN_API_KEY
+from .config import ACCESS_TOKEN, DEMO_MODE, NANSEN_API_KEY
 from .engine import engine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
+
+
+class TokenGate(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if ACCESS_TOKEN and request.url.path.startswith("/api/") and request.url.path != "/api/health":
+            if request.headers.get("X-PerpPilot-Token") != ACCESS_TOKEN:
+                return JSONResponse({"detail": "unauthorized"}, status_code=401)
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -24,6 +34,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="PerpPilot", lifespan=lifespan)
+app.add_middleware(TokenGate)
 
 
 class WatchRequest(BaseModel):

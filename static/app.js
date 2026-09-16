@@ -49,8 +49,35 @@ function sideCls(side) {
   return side === "long" || side === "Long" ? "side-long" : "side-short";
 }
 
-async function api(path, opts) {
+function apiToken() {
+  return localStorage.getItem("pp-token") || "";
+}
+
+function showGate() {
+  const g = $("#token-gate");
+  if (!g.classList.contains("open")) {
+    g.classList.add("open");
+    $("#gate-token").focus();
+  }
+}
+
+$("#gate-save").addEventListener("click", () => {
+  const v = $("#gate-token").value.trim();
+  if (!v) return;
+  localStorage.setItem("pp-token", v);
+  location.reload();
+});
+$("#gate-token").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("#gate-save").click();
+});
+
+async function api(path, opts = {}) {
+  opts.headers = { ...(opts.headers || {}), "X-PerpPilot-Token": apiToken() };
   const r = await fetch(path, opts);
+  if (r.status === 401) {
+    showGate();
+    throw new Error("unauthorized");
+  }
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return r.json();
 }

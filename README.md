@@ -69,6 +69,21 @@ Open http://127.0.0.1:8317
 - State lives in `state/` (watchlist + call counter) — delete to reset.
 - Stop the server: `Get-NetTCPConnection -LocalPort 8317 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess }`
 
+## Deploy (Render)
+
+The backend is a long-running process, so it needs a real host (Render/Railway/Fly) — not Vercel or GitHub Pages.
+
+1. Push this repo to GitHub (it already is: `TheRealNajim/PerpPilot`)
+2. On [render.com](https://dashboard.render.com): **New → Blueprint**, pick the repo — `render.yaml` is detected
+3. When prompted, fill the env vars:
+   - `NANSEN_API_KEY` — your key (never committed to git)
+   - `ACCESS_TOKEN` — any long random string; the dashboard asks for it before granting API access
+4. Deploy → open the URL → paste the token once (stored in your browser)
+
+> **Why the token gate?** Every visitor shares your Nansen credits. `ACCESS_TOKEN` locks all `/api/*`
+> routes (except the health check) behind a header check. Leave it empty in local development.
+> Note: Render's free tier has an ephemeral disk — the watchlist resets on restart/redeploy.
+
 ## Troubleshooting
 
 - **"Nansen API credits exhausted" banner** — your key has 0 credits left. Top up at

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: perppilot
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NANSEN_API_KEY
+        sync: false
+      - key: ACCESS_TOKEN
+        sync: false
