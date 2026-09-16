@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PerpPilot — Hyperliquid Copy-Trading Co-Pilot</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="40" height="40">
+          <defs>
+            <linearGradient id="ppg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f8cff"/>
+              <stop offset="1" stop-color="#7b5cff"/>
+            </linearGradient>
+          </defs>
+          <rect width="48" height="48" rx="11" fill="url(#ppg)"/>
+          <path d="M10 33.5 L18.5 25 L24 30 L35 19" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M29 19 H35 V25" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>PerpPilot</h1>
+        <p>Hyperliquid copy-trading co-pilot · powered by <b>Nansen</b></p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat" id="stat-calls" title="Nansen API calls issued this session">
+        <span class="label">API calls</span><span class="value" id="calls-value">—</span>
+        <div class="meter"><div id="calls-meter"></div></div>
+        <span class="sub" id="credits-value"></span>
+      </div>
+      <div class="stat"><span class="label">Watchlist</span><span class="value" id="watch-count">0</span></div>
+      <div class="stat"><span class="label">Alerts</span><span class="value" id="alert-count">0</span></div>
+      <button class="icon-btn" id="sound-toggle" title="Toggle alert sound">SND OFF</button>
+      <button class="icon-btn" id="pause-btn" title="Pause/resume Nansen API calls">PAUSE</button>
+      <span class="mode-badge" id="mode-badge">—</span>
+      <span class="live-dot" id="live-dot" title="engine status"></span>
+    </div>
+  </header>
+
+  <div id="api-banner" class="api-banner hidden">
+    <b>Nansen API credits exhausted.</b> Live data paused — top up credits at
+    <a href="https://app.nansen.ai" target="_blank" rel="noopener">app.nansen.ai</a> (2x bonus while the buildathon is live),
+    or set <code>DEMO_MODE=1</code> in <code>.env</code> to keep exploring with simulated data.
+  </div>
+
+  <nav>
+    <button class="tab active" data-tab="discover">Discover</button>
+    <button class="tab" data-tab="watchlist">Watchlist <span class="pill" id="tab-watch-count">0</span></button>
+    <button class="tab" data-tab="alerts">Alerts <span class="pill" id="tab-alert-count">0</span></button>
+    <button class="tab" data-tab="feed">Smart Money Feed</button>
+    <button class="tab" data-tab="about">About</button>
+  </nav>
+
+  <main>
+    <section id="tab-discover" class="tab-panel active">
+      <div class="panel-head">
+        <h2>Top Hyperliquid traders · last 7 days</h2>
+        <span class="muted" id="lb-updated"></span>
+      </div>
+      <div class="toolbar">
+        <input id="lb-search" type="search" placeholder="Search label or address…" />
+        <label class="chk"><input type="checkbox" id="lb-open-only" /> open positions only</label>
+      </div>
+      <div class="table-wrap">
+        <table id="lb-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Trader</th><th class="num">7d PnL</th><th class="num">ROI</th>
+              <th class="num">Volume</th><th class="num">Trades</th><th class="num">Acct Value</th>
+              <th>Top positions</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-watchlist" class="tab-panel">
+      <div class="panel-head">
+        <h2>Tracked traders</h2>
+        <span class="muted">win rates & risk from 30d trade history · refreshed continuously</span>
+      </div>
+      <div id="basket" class="basket"></div>
+      <div class="consensus-title">Copy Score — who to actually copy · net positioning across the watchlist</div>
+      <div id="consensus" class="consensus"></div>
+      <div id="watch-grid" class="cards"></div>
+    </section>
+
+    <section id="tab-alerts" class="tab-panel">
+      <div class="panel-head">
+        <h2>Position-change alerts</h2>
+        <span class="muted">detected by diffing live positions on every poll</span>
+      </div>
+      <ul id="alert-feed" class="feed"></ul>
+    </section>
+
+    <section id="tab-feed" class="tab-panel">
+      <div class="panel-head">
+        <h2>Nansen smart money · live perp trades</h2>
+        <span class="muted">"Smart HL Perps Trader" cohort · trailing 2h window</span>
+      </div>
+      <div class="table-wrap">
+        <table id="sm-table">
+          <thead>
+            <tr>
+              <th>Time</th><th>Trader</th><th>Coin</th><th>Action</th><th>Side</th>
+              <th class="num">Size</th><th class="num">Price</th><th class="num">Value</th><th>Type</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-about" class="tab-panel">
+      <div class="panel-head"><h2>About PerpPilot</h2></div>
+      <div class="about-card">
+        <p><b>PerpPilot</b> is a copy-trading co-pilot for Hyperliquid perpetuals built on the Nansen API for the
+        <b>Meridian Buildathon</b>. It finds the most profitable perps traders, tracks their live positions,
+        scores their risk, and alerts you the moment they open, close, flip, add, reduce — or get close to liquidation.</p>
+        <h3>Nansen endpoints used</h3>
+        <ul>
+          <li><code>POST /api/v1/perp-leaderboard</code> — discover top traders (Smart HL Perps Trader cohort, 7d)</li>
+          <li><code>POST /api/v1/profiler/perp-positions</code> — live positions per tracked wallet (entry / liq / leverage / uPnL)</li>
+          <li><code>POST /api/v1/profiler/perp-trades</code> — 30d trade history → win rate, profit factor, equity curve</li>
+          <li><code>POST /api/v1/smart-money/perp-trades</code> — smart money trade firehose</li>
+        </ul>
+        <h3>Risk score</h3>
+        <p>Composite of max leverage, closest liquidation distance, position concentration and margin usage → LOW / MEDIUM / HIGH.</p>
+        <h3>Consensus & confluence</h3>
+        <p>The <b>consensus</b> strip aggregates live positioning across your whole watchlist per coin.
+        A <b>confluence alert</b> fires when 2+ tracked traders open the same side of the same coin within 15 minutes — a flock signal worth copying.</p>
+        <h3>Alert webhooks</h3>
+        <p class="muted">Paste a Discord or Telegram bot webhook to push alerts to your phone. Telegram format: <code>https://api.telegram.org/bot&lt;token&gt;/sendMessage</code> + chat id.</p>
+        <div class="settings-row">
+          <input id="set-webhook" type="text" placeholder="Discord webhook URL or Telegram sendMessage URL" />
+          <input id="set-chatid" type="text" placeholder="Telegram chat id" style="max-width:180px" />
+          <button id="set-save" class="track-btn">Save</button>
+        </div>
+        <p class="muted">Not financial advice. Data by Nansen.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside id="drawer">
+    <div class="drawer-head">
+      <div>
+        <h3 id="d-label">—</h3>
+        <a id="d-addr" class="mono muted" href="#" target="_blank" rel="noopener"></a>
+      </div>
+      <button id="d-close" class="icon-btn">✕</button>
+    </div>
+    <div id="d-summary" class="d-summary"></div>
+    <canvas id="d-chart" height="90"></canvas>
+    <h4>Open positions</h4>
+    <div class="table-wrap">
+      <table id="d-pos">
+        <thead><tr><th>Coin</th><th>Side</th><th class="num">Size</th><th class="num">Value</th><th class="num">Entry</th><th class="num">Mark</th><th class="num">Liq</th><th class="num">Lev</th><th class="num">uPnL</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <h4>Skill by coin (30d closed trades)</h4>
+    <div class="table-wrap">
+      <table id="d-skills">
+        <thead><tr><th>Coin</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">Closed PnL</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <h4>Tracked alerts</h4>
+    <ul id="d-alerts" class="feed small"></ul>
+    <button id="d-remove" class="danger-btn">Remove from watchlist</button>
+  </aside>
+
+  <div id="toasts"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
