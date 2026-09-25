@@ -153,11 +153,18 @@
     <div class="drawer-head">
       <div>
         <h3 id="d-label">—</h3>
-        <a id="d-addr" class="mono muted" href="#" target="_blank" rel="noopener"></a>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <a id="d-addr" class="mono muted" href="#" target="_blank" rel="noopener"></a>
+          <button id="d-copy" class="icon-btn" title="Copy address">COPY</button>
+        </div>
       </div>
       <button id="d-close" class="icon-btn">✕</button>
     </div>
     <div id="d-summary" class="d-summary"></div>
+    <div class="d-donut-wrap">
+      <canvas id="d-donut" width="92" height="92"></canvas>
+      <div class="donut-legend" id="d-donut-legend"></div>
+    </div>
     <canvas id="d-chart" height="90"></canvas>
     <h4>Open positions</h4>
     <div class="table-wrap">
@@ -179,6 +186,11 @@
   </aside>
 
   <div id="toasts"></div>
+
+  <footer>
+    <span>Built for the <b>Nansen Meridian Buildathon</b> · <a href="https://github.com/TheRealNajim/PerpPilot" target="_blank" rel="noopener">source</a></span>
+    <span>Not financial advice · data by <a href="https://nansen.ai" target="_blank" rel="noopener">Nansen</a></span>
+  </footer>
 
   <div id="token-gate">
     <div class="gate-card">

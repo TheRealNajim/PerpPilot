@@ -14,30 +14,53 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(79,140,255,.09), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(123,92,255,.08), transparent 60%),
+    var(--bg);
   color: var(--text);
   font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
   padding-bottom: 40px;
 }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(rgba(79,140,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,140,255,.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 30%, transparent 75%);
+}
 a { color: var(--accent); text-decoration: none; }
-.mono { font-family: var(--mono); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); font-size: 12px; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: #232c3f; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #2f3a52; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes flashup { 0% { background: rgba(46,204,143,.25); } 100% { background: transparent; } }
+@keyframes flashdown { 0% { background: rgba(255,92,108,.25); } 100% { background: transparent; } }
+.flash-up { animation: flashup 1.2s ease-out; border-radius: 4px; }
+.flash-down { animation: flashdown 1.2s ease-out; border-radius: 4px; }
+@keyframes fadeup { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tab-panel.active { animation: fadeup .25s ease; }
 
 header {
+  position: sticky; top: 0; z-index: 40;
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 22px; border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #10151f, #0d1119);
+  background: rgba(13,17,25,.78); backdrop-filter: blur(12px);
   flex-wrap: wrap; gap: 12px;
 }
 .brand { display: flex; gap: 12px; align-items: center; }
 .logo { width: 40px; height: 40px; display: grid; place-items: center; filter: drop-shadow(0 2px 10px rgba(79,140,255,.35)); }
 .logo svg { display: block; }
-h1 { margin: 0; font-size: 19px; letter-spacing: .5px; }
+h1 { margin: 0; font-size: 19px; letter-spacing: .5px; background: linear-gradient(90deg, #dbe4f3, #8fb3ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .brand p { margin: 0; font-size: 12px; color: var(--muted); }
 .header-stats { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .stat { display: flex; flex-direction: column; min-width: 84px; }
 .stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-.stat .value { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+.stat .value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; }
 .meter { width: 100px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 3px; }
 .meter div { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width .4s; }
 .sub { font-size: 9.5px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
@@ -252,3 +275,21 @@ th.num { text-align: right; }
   color: var(--text); padding: 9px 12px; border-radius: 8px; font: inherit;
 }
 .gate-card .track-btn { width: 100%; padding: 9px; }
+
+td.rank { font-family: var(--mono); font-weight: 700; }
+td.r1 { color: #f5c04c; text-shadow: 0 0 12px rgba(245,192,76,.45); }
+td.r2 { color: #c9d3e4; text-shadow: 0 0 10px rgba(201,211,228,.35); }
+td.r3 { color: #d9925f; text-shadow: 0 0 10px rgba(217,146,95,.35); }
+.card { transition: border-color .15s, transform .15s, box-shadow .15s; }
+.card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(79,140,255,.12); }
+#d-copy { margin-left: 8px; font-size: 9.5px; letter-spacing: .5px; width: auto; padding: 0 9px; height: 24px; }
+.d-donut-wrap { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }
+#d-donut { width: 92px; height: 92px; }
+.donut-legend { font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+.donut-legend b { font-family: var(--mono); }
+footer {
+  margin: 26px 22px 0; padding: 14px 18px; border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; display: flex; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+footer a { color: var(--muted); text-decoration: underline; }

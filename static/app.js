@@ -10,9 +10,19 @@ const state = {
   lastAlertId: null,
   drawerAddr: null,
   chart: null,
+  donut: null,
   tracked: new Set(),
   paused: false,
+  lbUpdatedAt: null,
 };
+
+const prevVals = {};
+function flashCls(key, val) {
+  const p = prevVals[key];
+  prevVals[key] = val;
+  if (p == null || val == null || p === val) return "";
+  return val > p ? "flash-up" : "flash-down";
+}
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -116,9 +126,9 @@ function renderLeaderboard() {
         .map((p) => `<span class="mono">${esc(p.coin)} <span class="${sideCls(p.side)}">${p.side === "long" ? "L" : "S"}</span> ${fmtUsd(p.position_value_usd)}</span>`)
         .join(" · ");
       return `<tr>
-        <td class="dim">${i + 1}</td>
+        <td class="rank ${i < 3 ? `r${i + 1}` : "dim"}">${i + 1}</td>
         <td><b>${esc(r.trader_address_label || shortAddr(r.trader_address))}</b><br><span class="mono dim addr">${shortAddr(r.trader_address)}</span></td>
-        <td class="num ${signedClass(r.total_pnl)}">${fmtUsd(r.total_pnl)}</td>
+        <td class="num ${signedClass(r.total_pnl)} ${flashCls("lb:" + r.trader_address, r.total_pnl)}">${fmtUsd(r.total_pnl)}</td>
         <td class="num ${signedClass(r.roi)}">${fmtPct(r.roi)}</td>
         <td class="num">${fmtUsd(r.volume_usd)}</td>
         <td class="num dim">${r.total_trades ?? "—"}</td>
@@ -220,7 +230,7 @@ function renderWatchlist() {
         <div class="card-stats">
           <div class="card-stat"><div class="label">Win rate</div><div class="value">${fmtPct(wr)}</div></div>
           <div class="card-stat"><div class="label">Profit factor</div><div class="value ${pf != null && pf >= 1 ? "pos" : "neg"}">${pf ?? "—"}</div></div>
-          <div class="card-stat"><div class="label">30d closed PnL</div><div class="value ${signedClass(t.total_closed_pnl)}">${fmtUsd(t.total_closed_pnl)}</div></div>
+          <div class="card-stat"><div class="label">30d closed PnL</div><div class="value ${signedClass(t.total_closed_pnl)} ${flashCls("wl:" + t.address, t.total_closed_pnl)}">${fmtUsd(t.total_closed_pnl)}</div></div>
           <div class="card-stat"><div class="label">Open pos</div><div class="value">${t.open_positions} <span class="dim">/ ${fmtUsd(t.total_notional)}</span></div></div>
         </div>
         <div class="card-foot">
@@ -343,6 +353,7 @@ async function openDrawer(addr) {
     $("#d-label").textContent = d.label;
     $("#d-addr").textContent = d.address;
     $("#d-addr").href = `https://hyperdash.info/trader/${d.address}`;
+    $("#d-copy").onclick = () => copyText(d.address);
     const risk = d.risk;
     $("#d-summary").innerHTML = `
       <div class="d-sum"><div class="label">Win rate (30d)</div><div class="value">${fmtPct(d.win_rate)}</div></div>
@@ -363,7 +374,7 @@ async function openDrawer(addr) {
         <td class="num">${p.mark ? p.mark.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}</td>
         <td class="num dim">${p.liq ? p.liq.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}</td>
         <td class="num">${p.leverage}x</td>
-        <td class="num ${signedClass(p.upnl)}">${fmtUsd(p.upnl)}</td>
+        <td class="num ${signedClass(p.upnl)} ${flashCls("pos:" + addr + ":" + p.coin, p.upnl)}">${fmtUsd(p.upnl)}</td>
       </tr>`
       )
       .join("") || `<tr><td colspan="9" class="dim">No open positions</td></tr>`;
@@ -385,10 +396,82 @@ async function openDrawer(addr) {
         )
         .join("") || `<li class="empty">No alerts for this trader yet.</li>`;
     renderChart(d.metrics && d.metrics.equity_curve);
+    renderDonut(d.metrics);
   } catch (e) {
     toast(e.message, "danger");
   }
 }
+
+function copyText(text) {
+  const done = () => toast("Address copied to clipboard", "info");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); done(); } catch {}
+  ta.remove();
+}
+
+function renderDonut(m) {
+  if (state.donut) {
+    state.donut.destroy();
+    state.donut = null;
+  }
+  const wins = m && m.wins != null ? m.wins : 0;
+  const losses = m && m.losses != null ? m.losses : 0;
+  if (wins + losses === 0) {
+    $("#d-donut-legend").innerHTML = `<span class="muted">No closed trades yet</span>`;
+    return;
+  }
+  state.donut = new Chart($("#d-donut"), {
+    type: "doughnut",
+    data: {
+      labels: ["Wins", "Losses"],
+      datasets: [{ data: [wins, losses], backgroundColor: ["#2ecc8f", "#ff5c6c"], borderWidth: 0 }],
+    },
+    options: {
+      cutout: "68%",
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+    },
+  });
+  $("#d-donut-legend").innerHTML = `
+    <span>Wins <b class="pos">${wins}</b></span>
+    <span>Losses <b class="neg">${losses}</b></span>
+    <span class="muted">30d closed trades</span>`;
+}
+
+function closeDrawer() {
+  $("#drawer").classList.remove("open");
+  state.drawerAddr = null;
+  if (state.chart) {
+    state.chart.destroy();
+    state.chart = null;
+  }
+  if (state.donut) {
+    state.donut.destroy();
+    state.donut = null;
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDrawer();
+});
+document.addEventListener("click", (e) => {
+  const drawer = $("#drawer");
+  if (!drawer.classList.contains("open")) return;
+  if (drawer.contains(e.target)) return;
+  if (e.target.closest(".card")) return;
+  closeDrawer();
+});
 
 function renderChart(curve) {
   const ctx = $("#d-chart");
@@ -423,16 +506,12 @@ function renderChart(curve) {
   state.chart = chart;
 }
 
-$("#d-close").addEventListener("click", () => {
-  $("#drawer").classList.remove("open");
-  state.drawerAddr = null;
-});
+$("#d-close").addEventListener("click", closeDrawer);
 $("#d-remove").addEventListener("click", async () => {
   if (!state.drawerAddr) return;
   await api(`/api/watchlist/${state.drawerAddr}`, { method: "DELETE" });
   state.tracked.delete(state.drawerAddr);
-  $("#drawer").classList.remove("open");
-  state.drawerAddr = null;
+  closeDrawer();
   toast("Removed from watchlist", "info");
 });
 
@@ -500,7 +579,8 @@ async function pollAll() {
       api("/api/basket").catch(() => null),
     ]);
     state.leaderboard = lb.data || [];
-    if (lb.updated_at) $("#lb-updated").textContent = `updated ${relTime(lb.updated_at)}`;
+    state.lbUpdatedAt = lb.updated_at || null;
+    if (state.lbUpdatedAt) $("#lb-updated").textContent = `updated ${relTime(state.lbUpdatedAt)}`;
     state.watchlist = wl.data || [];
     state.watchlist.forEach((t) => state.tracked.add(t.address));
     const newAlerts = (al.data || []).filter((a) => a.id !== state.lastAlertId);
@@ -526,3 +606,8 @@ pollHealth();
 pollAll();
 setInterval(pollHealth, 5000);
 setInterval(pollAll, 6000);
+setInterval(() => {
+  if (state.lbUpdatedAt) $("#lb-updated").textContent = `updated ${relTime(state.lbUpdatedAt)}`;
+  if (state.tab === "alerts") renderAlerts();
+  if (state.tab === "watchlist") renderWatchlist();
+}, 30000);
