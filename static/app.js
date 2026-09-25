@@ -324,9 +324,21 @@ $("#pause-btn").addEventListener("click", async () => {
 renderSoundBtn();
 
 /* ---------- smart money feed ---------- */
+state.feedWatchedOnly = localStorage.getItem("pp-feed-watched") === "on";
+$("#sm-watched-only").checked = state.feedWatchedOnly;
+$("#sm-watched-only").addEventListener("change", (e) => {
+  state.feedWatchedOnly = e.target.checked;
+  localStorage.setItem("pp-feed-watched", e.target.checked ? "on" : "off");
+  renderFeed();
+});
 function renderFeed() {
   const tbody = $("#sm-table tbody");
-  tbody.innerHTML = state.smartTrades
+  const rows = state.smartTrades.filter((t) => !state.feedWatchedOnly || t.watched);
+  if (state.feedWatchedOnly && !rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="dim">No trades from your tracked traders in the current window.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows
     .map((t) => {
       const side = t.side || (t.action && t.action.includes("Long") ? "Long" : "Short");
       return `<tr>
