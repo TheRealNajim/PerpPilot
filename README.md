@@ -4,6 +4,8 @@
 
 <p align="center"><img src="docs/screenshot-dashboard.png" alt="PerpPilot dashboard" width="900"></p>
 
+<p align="center"><a href="docs/demo-video.mp4"><b>▶ Watch the 60s demo</b></a> — narrated walkthrough of the live app</p>
+
 Track the most profitable Hyperliquid perpetual traders, see their live positions, win rates and risk,
 and get alerted the moment they open, close, flip, add, reduce — or drift near liquidation.
 Built on the **Nansen API** for the **Meridian Buildathon**.
