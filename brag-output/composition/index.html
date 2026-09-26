@@ -1,0 +1,422 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1600, height=900" />
+<title>PerpPilot — Brag</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/music/vol-12-audio-data.js"></script>
+<style>
+  @font-face { font-family: "Cascadia Mono"; src: local("Cascadia Mono"), local("Cascadia Code"), local("Consolas"); }
+  html, body { margin: 0; background: #0b0e14; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: #dbe4f3; }
+  .mono { font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0e14; }
+
+  #bg { position: absolute; inset: 0; background: #0b0e14; }
+  .wash { position: absolute; border-radius: 50%; filter: blur(90px); }
+  #wash-a { width: 900px; height: 520px; right: -160px; top: -180px; background: rgba(79,140,255,.10); }
+  #wash-b { width: 800px; height: 480px; left: -180px; bottom: -200px; background: rgba(123,92,255,.09); }
+  #grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(79,140,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(79,140,255,.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at 50% 20%, #000 40%, transparent 85%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 20%, #000 40%, transparent 85%);
+  }
+
+  .clip { position: absolute; inset: 0; }
+  .brandmark { position: absolute; left: 28px; top: 24px; display: flex; align-items: center; gap: 10px; }
+  .brandmark .word { font-size: 17px; font-weight: 700; letter-spacing: .4px; }
+  .brandmark .word b { color: #4f8cff; }
+  .live-badge {
+    position: absolute; right: 28px; top: 28px; display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #2ecc8f;
+    border: 1px solid rgba(46,204,143,.4); border-radius: 20px; padding: 5px 13px;
+    font-family: "Cascadia Mono", Consolas, monospace;
+  }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc8f; box-shadow: 0 0 8px #2ecc8f; }
+
+  /* Scene 1 */
+  #s1-center { position: absolute; inset: 0; display: grid; place-items: center; }
+  #s1-stack { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  #whale-num {
+    font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums;
+    font-size: 118px; font-weight: 700; color: #2ecc8f; letter-spacing: 1px; margin: 0;
+  }
+  #hook-cap { margin: 0; font-family: "Cascadia Mono", Consolas, monospace; font-size: 22px; color: #9fb2d0; letter-spacing: 1px; }
+  #hook-cap span { opacity: 0; }
+
+  /* Panels shared */
+  .panel {
+    background: #121722; border: 1px solid #232c3f; border-radius: 16px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.5);
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 26px 14px; }
+  .panel-title { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: #93a1ba; }
+
+  /* Scene 2 */
+  #s2-center { position: absolute; inset: 0; display: grid; place-items: center; }
+  #lb-panel { width: 1180px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 22px; padding: 17px 26px;
+    border-top: 1px solid #1a2131;
+  }
+  .lb-rank { width: 34px; font-size: 15px; color: #93a1ba; font-family: "Cascadia Mono", Consolas, monospace; }
+  .lb-who { flex: 1; }
+  .lb-label { font-size: 19px; font-weight: 700; }
+  .lb-addr { font-size: 12px; color: #93a1ba; font-family: "Cascadia Mono", Consolas, monospace; }
+  .lb-pnl { font-size: 23px; font-weight: 700; color: #2ecc8f; font-family: "Cascadia Mono", Consolas, monospace; }
+  .lb-roi {
+    font-size: 13px; font-weight: 700; color: #2ecc8f; background: rgba(46,204,143,.12);
+    padding: 4px 10px; border-radius: 14px; font-family: "Cascadia Mono", Consolas, monospace;
+  }
+  .track-btn {
+    background: #4f8cff; color: #0b0e14; border: none; font-weight: 700; font-size: 14px;
+    padding: 9px 20px; border-radius: 8px; font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  .track-btn.tracked { background: #171e2c; color: #7d8aa3; border: 1px solid #232c3f; }
+  #cursor { position: absolute; left: 0; top: 0; width: 30px; height: 30px; }
+  #click-ring {
+    position: absolute; width: 18px; height: 18px; border: 2px solid #4f8cff; border-radius: 50%;
+    opacity: 0;
+  }
+
+  /* Scene 3 */
+  #s3-center { position: absolute; inset: 0; display: grid; place-items: center; }
+  #watch-card { width: 960px; padding: 26px 30px 24px; }
+  .wc-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .wc-name { font-size: 25px; font-weight: 700; margin: 0 0 3px; }
+  .wc-addr { font-size: 12.5px; color: #93a1ba; font-family: "Cascadia Mono", Consolas, monospace; }
+  .badges { display: flex; gap: 8px; }
+  .badge { font-size: 12px; font-weight: 700; letter-spacing: .5px; padding: 5px 12px; border-radius: 16px; }
+  .badge.cs { background: rgba(79,140,255,.16); color: #8fb3ff; }
+  .badge.risk { background: rgba(255,92,108,.14); color: #ff8c98; }
+  .wc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 22px 0 18px; }
+  .stat { background: #171e2c; border: 1px solid #232c3f; border-radius: 10px; padding: 12px 16px; }
+  .stat .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.2px; color: #93a1ba; }
+  .stat .val { font-size: 31px; font-weight: 700; font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .pos { color: #2ecc8f; }
+  #spark { width: 100%; height: 92px; display: block; }
+
+  /* Scene 4 */
+  #s4-center { position: absolute; inset: 0; }
+  #s4-dim { position: absolute; inset: 0; background: rgba(5,8,12,.55); opacity: 0; }
+  .toast {
+    position: absolute; right: 90px; width: 620px; display: flex; gap: 16px; align-items: center;
+    background: rgba(18,23,34,.96); border: 1px solid #232c3f; border-radius: 14px;
+    padding: 16px 20px; box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  }
+  #toast1 { top: 190px; border-left: 3px solid #2ecc8f; }
+  #toast2 { top: 330px; border-left: 3px solid #f5b04c; }
+  .t-ico {
+    width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center;
+    font-size: 18px; font-weight: 700; flex-shrink: 0;
+  }
+  #toast1 .t-ico { background: rgba(46,204,143,.14); color: #2ecc8f; }
+  #toast2 .t-ico { background: rgba(245,176,76,.14); color: #f5b04c; }
+  .t-label { font-size: 15px; font-weight: 700; }
+  .t-msg { font-size: 14.5px; color: #c6d2e6; font-family: "Cascadia Mono", Consolas, monospace; }
+  .t-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #f5b04c; }
+  .mini-feed { position: absolute; left: 110px; top: 170px; display: flex; flex-direction: column; gap: 12px; }
+  .mf-row {
+    display: flex; align-items: center; gap: 12px; background: rgba(18,23,34,.9);
+    border: 1px solid #232c3f; border-radius: 10px; padding: 12px 16px; width: 480px;
+    font-family: "Cascadia Mono", Consolas, monospace; font-size: 13.5px;
+  }
+  .mf-type { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; padding: 3px 9px; border-radius: 12px; }
+  .mf-open { background: rgba(46,204,143,.14); color: #2ecc8f; }
+  .mf-close { background: rgba(79,140,255,.14); color: #8fb3ff; }
+  .mf-flip { background: rgba(245,176,76,.14); color: #f5b04c; }
+  .mf-time { margin-left: auto; color: #93a1ba; }
+
+  /* Scene 5 */
+  #s5-center { position: absolute; inset: 0; display: grid; place-items: center; }
+  #s5-stack { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+  #s5-line { margin: 0; font-size: 42px; font-weight: 700; letter-spacing: .3px; }
+  #s5-line b { color: #4f8cff; }
+  #s5-lockup { display: flex; align-items: center; gap: 20px; }
+  #s5-word { font-size: 62px; font-weight: 700; letter-spacing: .5px; }
+  #s5-word .p2 {
+    background: linear-gradient(90deg, #4f8cff, #7b5cff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  #s5-sub { margin: 0; font-size: 15px; color: #93a1ba; letter-spacing: .6px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="perppilot-brag" data-start="0" data-width="1600" data-height="900" data-duration="20.8" data-fps="30">
+
+  <div id="bg">
+    <div id="wash-a" class="wash" data-layout-allow-overflow></div>
+    <div id="wash-b" class="wash" data-layout-allow-overflow></div>
+    <div id="grid"></div>
+  </div>
+
+  <!-- Scene 1 - Hook: the whale -->
+  <section id="s1" class="clip" data-start="0" data-duration="4.3">
+    <div class="brandmark" id="s1-brand">
+      <svg width="34" height="34" viewBox="0 0 48 48"><defs><linearGradient id="ppg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#7b5cff"/></linearGradient></defs><rect width="48" height="48" rx="11" fill="url(#ppg1)"/><path d="M10 33.5 L18.5 25 L24 30 L35 19" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 19 H35 V25" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="word">Perp<b>Pilot</b></span>
+    </div>
+    <div class="live-badge" id="s1-live"><span class="live-dot"></span>LIVE - NANSEN</div>
+    <div id="s1-center">
+      <div id="s1-stack">
+        <p id="whale-num" class="mono">$0</p>
+        <p id="hook-cap"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 2 - Discover then Track -->
+  <section id="s2" class="clip" data-start="4.3" data-duration="4.1">
+    <div class="brandmark" id="s2-brand">
+      <svg width="34" height="34" viewBox="0 0 48 48"><defs><linearGradient id="ppg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#7b5cff"/></linearGradient></defs><rect width="48" height="48" rx="11" fill="url(#ppg2)"/><path d="M10 33.5 L18.5 25 L24 30 L35 19" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 19 H35 V25" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="word">Perp<b>Pilot</b></span>
+    </div>
+    <div class="live-badge" id="s2-live"><span class="live-dot"></span>LIVE - NANSEN</div>
+    <div id="s2-center">
+      <div id="lb-panel" class="panel">
+        <div class="panel-head">
+          <span class="panel-title">DISCOVER - TOP HL PERPS TRADERS - 7D</span>
+          <span class="panel-title mono">SMART HL PERPS TRADER COHORT</span>
+        </div>
+        <div class="lb-row" id="lb-row-1">
+          <span class="lb-rank">1</span>
+          <div class="lb-who"><div class="lb-label">HL Perps Whale</div><div class="lb-addr">0x382b...3e39</div></div>
+          <span class="lb-pnl">+$5.72M</span>
+          <span class="lb-roi">+109.8%</span>
+          <button class="track-btn" id="track-btn-1">Track</button>
+        </div>
+        <div class="lb-row" id="lb-row-2">
+          <span class="lb-rank">2</span>
+          <div class="lb-who"><div class="lb-label">cosmicvision.eth</div><div class="lb-addr">0x8f14...a2c7</div></div>
+          <span class="lb-pnl">+$2.55M</span>
+          <span class="lb-roi">+64.2%</span>
+          <button class="track-btn" id="track-btn-2">Track</button>
+        </div>
+        <div class="lb-row" id="lb-row-3">
+          <span class="lb-rank">3</span>
+          <div class="lb-who"><div class="lb-label">Uses "TRADEXYZ1" HL Referral Code</div><div class="lb-addr">0x51be...9d04</div></div>
+          <span class="lb-pnl">+$2.47M</span>
+          <span class="lb-roi">+88.5%</span>
+          <button class="track-btn" id="track-btn-3">Track</button>
+        </div>
+      </div>
+    </div>
+    <div id="cursor">
+      <svg width="30" height="30" viewBox="0 0 24 24"><path d="M5 3 L19 12 L12 13.5 L8.5 20 Z" fill="#ffffff" stroke="#0b0e14" stroke-width="1.2"/></svg>
+    </div>
+    <div id="click-ring"></div>
+  </section>
+
+  <!-- Scene 3 - The scores -->
+  <section id="s3" class="clip" data-start="8.4" data-duration="4.6">
+    <div id="s3-center">
+      <div id="watch-card" class="panel">
+        <div class="wc-top">
+          <div>
+            <p class="wc-name">HL Perps Whale</p>
+            <span class="wc-addr">0x382b...3e39 - tracked 4m ago</span>
+          </div>
+          <div class="badges">
+            <span class="badge cs" id="badge-cs">CS 59 MODERATE</span>
+            <span class="badge risk" id="badge-risk">RISK 66 HIGH</span>
+          </div>
+        </div>
+        <div class="wc-stats">
+          <div class="stat"><div class="lbl">Win rate 30d</div><div class="val pos" id="stat-wr">0.0%</div></div>
+          <div class="stat"><div class="lbl">Profit factor</div><div class="val pos" id="stat-pf">0</div></div>
+          <div class="stat"><div class="lbl">30d closed PnL</div><div class="val pos" id="stat-pnl">+$0.0K</div></div>
+          <div class="stat"><div class="lbl">Notional open</div><div class="val" id="stat-notional">$0.0M</div></div>
+        </div>
+        <svg id="spark" viewBox="0 0 820 92" preserveAspectRatio="none">
+          <polyline id="spark-line" fill="none" stroke="#4f8cff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+            points="0,78 43,70 86,74 129,58 172,62 215,48 258,52 301,38 344,44 387,30 430,36 473,22 516,30 559,16 602,24 645,12 688,20 731,10 774,16 820,8"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 4 - The alert -->
+  <section id="s4" class="clip" data-start="13" data-duration="4">
+    <div id="s4-center">
+      <div id="s4-dim"></div>
+      <div class="mini-feed">
+        <div class="mf-row" id="mf-1"><span class="mf-type mf-open">OPEN</span><span>SHORT CC 3x - $118K</span><span class="mf-time">2s</span></div>
+        <div class="mf-row" id="mf-2"><span class="mf-type mf-close">CLOSE</span><span>LONG DOGE - +$27.3K</span><span class="mf-time">41s</span></div>
+        <div class="mf-row" id="mf-3"><span class="mf-type mf-flip">FLIP</span><span>SOL to SHORT - $639K</span><span class="mf-time">1m</span></div>
+      </div>
+      <div class="toast" id="toast1">
+        <div class="t-ico">▲</div>
+        <div>
+          <div class="t-label">HL Perps Whale</div>
+          <div class="t-msg">Opened SHORT $118K CC (3x)</div>
+        </div>
+      </div>
+      <div class="toast" id="toast2">
+        <div class="t-ico">⇉</div>
+        <div>
+          <div class="t-tag">FLOCK SIGNAL</div>
+          <div class="t-msg">2 tracked traders opened the same side within 15 min</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 5 - Outro -->
+  <section id="s5" class="clip" data-start="17" data-duration="3.8">
+    <div id="s5-center">
+      <div id="s5-stack">
+        <p id="s5-line">Every number is <b>Nansen</b> data.</p>
+        <div id="s5-lockup">
+          <svg width="84" height="84" viewBox="0 0 48 48"><defs><linearGradient id="ppg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#7b5cff"/></linearGradient></defs><rect width="48" height="48" rx="11" fill="url(#ppg5)"/><path d="M10 33.5 L18.5 25 L24 30 L35 19" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 19 H35 V25" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="s5-word">Perp<span class="p2">Pilot</span></span>
+        </div>
+        <p id="s5-sub">Hyperliquid copy-trading co-pilot - Built for the Meridian Buildathon</p>
+      </div>
+    </div>
+  </section>
+
+  <audio id="bg-music" data-start="0" data-duration="20.8" data-track-index="10" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+  <audio id="tick-1" data-start="0.95" data-duration="0.25" data-track-index="11" data-volume="0.22" src="assets/sfx/keyboard/keypress-001.wav"></audio>
+  <audio id="tick-2" data-start="1.25" data-duration="0.25" data-track-index="12" data-volume="0.24" src="assets/sfx/keyboard/keypress-007.wav"></audio>
+  <audio id="tick-3" data-start="1.55" data-duration="0.25" data-track-index="13" data-volume="0.26" src="assets/sfx/keyboard/keypress-014.wav"></audio>
+  <audio id="tick-4" data-start="1.85" data-duration="0.25" data-track-index="14" data-volume="0.28" src="assets/sfx/keyboard/keypress-022.wav"></audio>
+  <audio id="slam" data-start="2.14" data-duration="0.12" data-track-index="15" data-volume="0.6" src="assets/sfx/impact/impactSoft_medium_000.ogg"></audio>
+  <audio id="click-sfx" data-start="7.25" data-duration="0.06" data-track-index="16" data-volume="0.55" src="assets/sfx/ui/mouseclick1.ogg"></audio>
+  <audio id="alert-sfx" data-start="13.55" data-duration="0.12" data-track-index="17" data-volume="0.65" src="assets/sfx/interface/bong_001.ogg"></audio>
+  <audio id="flock-sfx" data-start="14.65" data-duration="0.11" data-track-index="18" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+</div>
+
+<script>
+(function () {
+  var CAPTION = "one whale's ZEC long";
+
+  function fmtInt(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+  function fmtPct(n) { return n.toFixed(1) + "%"; }
+
+  var capEl = document.getElementById("hook-cap");
+  for (var i = 0; i < CAPTION.length; i++) {
+    var s = document.createElement("span");
+    s.textContent = CAPTION[i] === " " ? "\u00A0" : CAPTION[i];
+    capEl.appendChild(s);
+  }
+
+  var spark = document.getElementById("spark-line");
+  var sparkLen = spark.getTotalLength();
+  spark.style.strokeDasharray = sparkLen;
+  spark.style.strokeDashoffset = sparkLen;
+
+  var trackBtn = document.getElementById("track-btn-1");
+  var btnRect = trackBtn.getBoundingClientRect();
+  var cursorTargetX = Math.round(btnRect.left + btnRect.width / 2 - 15);
+  var cursorTargetY = Math.round(btnRect.top + btnRect.height / 2 - 10);
+  var ringTargetX = Math.round(btnRect.left + btnRect.width / 2 - 9);
+  var ringTargetY = Math.round(btnRect.top + btnRect.height / 2 - 9);
+
+  var frames = window.AUDIO_DATA && window.AUDIO_DATA.frames ? window.AUDIO_DATA.frames : [];
+  var fps = window.AUDIO_DATA ? window.AUDIO_DATA.fps : 30;
+  var numEl = document.getElementById("whale-num");
+  var washA = document.getElementById("wash-a");
+  var maxFrame = Math.min(frames.length, Math.round(20.8 * fps));
+
+  var counter = { v: 0 };
+  var wr = { v: 0 }, pf = { v: 0 }, pnl = { v: 0 }, notional = { v: 0 };
+
+  var tl = gsap.timeline({ paused: true });
+
+  tl.set("#bg-music", { volume: 0.32 }, 0);
+
+  // ---------- Scene 1: hook (0 - 4.3) ----------
+  tl.fromTo("#s1-brand", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.15);
+  tl.fromTo("#s1-live", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.3);
+  tl.fromTo("#whale-num", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 0.55);
+  // beat-locked: 2.19s — count-up slams into the final number on the beat
+  tl.to(counter, {
+    v: 10934023, duration: 1.35, ease: "power3.in",
+    onUpdate: function () { numEl.textContent = fmtInt(counter.v); }
+  }, 0.84);
+  tl.fromTo("#whale-num", { scale: 1 }, { scale: 1.045, immediateRender: false, duration: 0.14, ease: "power4.out" }, 2.19);
+  tl.to("#whale-num", { scale: 1, duration: 0.5, ease: "power2.out" }, 2.33);
+  tl.fromTo("#hook-cap span", { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.03, ease: "none", stagger: { each: 0.012 } }, 2.3);
+  tl.to(["#s1-brand", "#s1-live"], { opacity: 0, duration: 0.3 }, 3.95);
+  tl.to("#s1-stack", { opacity: 0, y: -18, duration: 0.3, ease: "power2.in" }, 4.0);
+
+  // ---------- Scene 2: discover then track (4.3 - 8.4) ----------
+  tl.fromTo("#s2-brand", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 4.35);
+  tl.fromTo("#s2-live", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 4.45);
+  tl.fromTo("#lb-panel", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.4);
+  // beat-grid: leaderboard rows at 4.39 / 4.91 / 5.34
+  tl.fromTo("#lb-row-1", { opacity: 0, x: -46 }, { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" }, 4.39);
+  tl.fromTo("#lb-row-2", { opacity: 0, x: -46 }, { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" }, 4.91);
+  tl.fromTo("#lb-row-3", { opacity: 0, x: -46 }, { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" }, 5.34);
+  tl.fromTo("#cursor", { x: 1420, y: 560, opacity: 0 }, { x: 1420, y: 560, opacity: 1, duration: 0.25 }, 5.8);
+  tl.to("#cursor", { x: cursorTargetX, y: cursorTargetY, duration: 0.9, ease: "power2.inOut" }, 6.3);
+  tl.fromTo("#click-ring", { scale: 0.4, opacity: 0.9, x: ringTargetX, y: ringTargetY }, { scale: 2.4, opacity: 0, duration: 0.5, ease: "power2.out" }, 7.25);
+  tl.call(function () {
+    trackBtn.textContent = "Tracking";
+    trackBtn.classList.add("tracked");
+  }, [], 7.3);
+  tl.to("#lb-row-1", { backgroundColor: "rgba(79,140,255,.10)", duration: 0.3 }, 7.3);
+  tl.to("#lb-row-1", { backgroundColor: "rgba(18,23,34,0)", duration: 0.4 }, 7.75);
+  tl.to("#lb-panel", { opacity: 0, y: -22, duration: 0.38, ease: "power2.in" }, 7.95);
+  tl.to(["#s2-brand", "#s2-live", "#cursor"], { opacity: 0, duration: 0.3 }, 8.0);
+
+  // ---------- Scene 3: the scores (8.4 - 13.0) ----------
+  // beat-locked: 8.74s — card reveal lands on the strong cue
+  tl.fromTo("#watch-card", { opacity: 0, y: 30, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.34, ease: "power3.out" }, 8.4);
+  tl.fromTo("#badge-cs", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 9.0);
+  tl.fromTo("#badge-risk", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 9.15);
+  // beat-grid: stat count-ups at 9.29 / 9.83 / 10.37 / 10.93
+  tl.to(wr, { v: 70.2, duration: 0.55, ease: "power2.out", onUpdate: function () { document.getElementById("stat-wr").textContent = fmtPct(wr.v); } }, 9.29);
+  tl.to(pf, { v: 1457, duration: 0.55, ease: "power2.out", onUpdate: function () { document.getElementById("stat-pf").textContent = String(Math.round(pf.v)); } }, 9.83);
+  tl.to(pnl, { v: 48.2, duration: 0.55, ease: "power2.out", onUpdate: function () { document.getElementById("stat-pnl").textContent = "+$" + pnl.v.toFixed(1) + "K"; } }, 10.37);
+  tl.to(notional, { v: 19.5, duration: 0.55, ease: "power2.out", onUpdate: function () { document.getElementById("stat-notional").textContent = "$" + notional.v.toFixed(1) + "M"; } }, 10.93);
+  tl.to(spark, { strokeDashoffset: 0, duration: 1.3, ease: "power2.inOut" }, 10.6);
+  tl.to("#watch-card", { opacity: 0, y: -18, duration: 0.36, ease: "power2.in" }, 12.55);
+
+  // ---------- Scene 4: the alert (13 - 17) ----------
+  tl.to("#s4-dim", { opacity: 1, duration: 0.3, ease: "power1.out" }, 12.95);
+  // beat-grid: toast1 slams in from the right, settles 13.6
+  tl.fromTo("#toast1", { x: 620, opacity: 1 }, { x: 0, duration: 0.5, ease: "power4.out" }, 13.1);
+  // beat-grid: second toast settles 14.73
+  tl.fromTo("#toast2", { x: 620, opacity: 1 }, { x: 0, duration: 0.5, ease: "power4.out" }, 14.23);
+  // beat-grid: feed rows cascade at 15.29 / 15.84 / 16.38
+  tl.fromTo("#mf-1", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.34, ease: "power2.out" }, 15.29);
+  tl.fromTo("#mf-2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.34, ease: "power2.out" }, 15.84);
+  tl.fromTo("#mf-3", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.34, ease: "power2.out" }, 16.38);
+  tl.to(["#toast1", "#toast2"], { opacity: 0, x: 80, duration: 0.32, ease: "power2.in" }, 16.55);
+  tl.to(["#mf-1", "#mf-2", "#mf-3", "#s4-dim"], { opacity: 0, duration: 0.32 }, 16.6);
+
+  // ---------- Scene 5: outro (17 - 20.8) ----------
+  // beat-locked: 17.47s — logo lockup lands on the strong cue
+  tl.fromTo("#s5-line", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 16.95);
+  tl.fromTo("#s5-lockup", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.6)" }, 17.0);
+  tl.fromTo("#s5-sub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 18.2);
+
+  // ---------- music fade ----------
+  tl.fromTo("#bg-music", { volume: 0.32 }, { volume: 0.0, immediateRender: false, duration: 1.5, ease: "power1.in" }, 19.3);
+
+  // ---------- audio-reactive: subtle glow from pre-extracted bands ----------
+  function applyAudio(frame) {
+    var bass = frame.bands[0];
+    var treble = frame.bands[12] || 0;
+    var glow = 8 + treble * 16;
+    gsap.set(numEl, { textShadow: "0 0 " + glow.toFixed(1) + "px rgba(46,204,143," + (0.10 + bass * 0.16).toFixed(3) + ")" });
+    gsap.set(washA, { opacity: 0.55 + bass * 0.3 });
+  }
+  for (var f = 0; f < maxFrame; f++) {
+    tl.call(
+      (function (frame) { return function () { applyAudio(frame); }; })(frames[f]),
+      [],
+      f / fps
+    );
+  }
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines["perppilot-brag"] = tl;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+Introducing PerpPilot: a copy-trading co-pilot for Hyperliquid perps, built on the Nansen API.
+It tracks the Smart HL Perps Trader cohort, scores who's actually worth copying — win rate, profit factor, risk — and alerts you the second a whale opens, flips, or drifts near liquidation.
+Built for the Meridian Buildathon. Repo: https://github.com/TheRealNajim/PerpPilot
