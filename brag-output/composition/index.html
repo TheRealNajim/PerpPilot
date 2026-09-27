@@ -309,14 +309,15 @@
   spark.style.strokeDashoffset = sparkLen;
 
   var trackBtn = document.getElementById("track-btn-1");
-  function layoutPos(el) {
-    var x = 0, y = 0, n = el;
-    while (n && n !== document.body) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-    return { x: x, y: y };
-  }
-  var btnPos = layoutPos(trackBtn);
-  var btnCx = btnPos.x + trackBtn.offsetWidth / 2;
-  var btnCy = btnPos.y + trackBtn.offsetHeight / 2;
+  var panelEl = document.getElementById("lb-panel");
+  var bRect = trackBtn.getBoundingClientRect();
+  var pRect = panelEl.getBoundingClientRect();
+  var relX = bRect.left - pRect.left;
+  var relY = bRect.top - pRect.top;
+  var panelX = (1600 - pRect.width) / 2;
+  var panelY = (900 - pRect.height) / 2;
+  var btnCx = panelX + relX + trackBtn.offsetWidth / 2;
+  var btnCy = panelY + relY + trackBtn.offsetHeight / 2;
   var cursorTargetX = Math.round(btnCx - 6);
   var cursorTargetY = Math.round(btnCy - 4);
   var ringTargetX = Math.round(btnCx - 9);
