@@ -52,7 +52,6 @@ class NansenClient:
     async def post(self, endpoint: str, payload: dict) -> dict:
         headers = {"Content-Type": "application/json", "apikey": NANSEN_API_KEY}
         for attempt in range(3):
-            self.record_call(endpoint)
             resp = await self._client.post(f"{BASE_URL}{endpoint}", headers=headers, json=payload)
             remaining = resp.headers.get("X-Nansen-Credits-Remaining")
             if remaining is not None:
@@ -64,6 +63,7 @@ class NansenClient:
                 self.out_of_credits = True
             elif resp.status_code < 400:
                 self.out_of_credits = False
+                self.record_call(endpoint)
             if resp.status_code == 429:
                 retry_after = 5.0
                 try:

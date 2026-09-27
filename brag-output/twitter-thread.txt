@@ -41,6 +41,7 @@ Thanks to @nansen_ai for the data layer.
 
 - Tweet 1: attach brag-output/brag.mp4 (native upload — the poster frame is baked in as the thumbnail)
 - Tweet 2: attach docs/screenshot-dashboard.png
-- Tweet 4: attach docs/demo-video.mp4 (the 63s narrated screen demo)
-- Post only after the API call counter crosses 1,000 if you want to claim "1,000+ Nansen API calls" — or add that line to Tweet 2 once true (it auto-pauses at 1,050)
-- Both buildathon requirements are covered: @nansen_ai tagged (tweets 1 and 4) + repo link (tweets 1 and 4)
+- Tweet 4: attach docs/demo-video.mp4 (the 59.5s narrated screen demo — this is the required 30-60s screen recording showing the live build)
+- Entry requirement is 100+ API calls (official rules) — we logged ~850, so that is covered
+- Both buildathon requirements are covered: @nansen_ai tagged (tweets 1 and 4) + public GitHub repo link (tweets 1 and 4)
+- Submit via https://nansen-ai.typeform.com/meridian-submit with: email, X post URL, repo URL
