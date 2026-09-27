@@ -357,11 +357,25 @@ function renderFeed() {
 }
 
 /* ---------- drawer ---------- */
+let lastDrawerStamp = "";
+let lastDrawerAddr = "";
 async function openDrawer(addr) {
   state.drawerAddr = addr;
   $("#drawer").classList.add("open");
   try {
     const d = await api(`/api/traders/${addr}`);
+    const firstAlertId = d.alerts && d.alerts.length ? d.alerts[0].id : "";
+    const stamp = [
+      d.updated_at || "",
+      (d.positions || []).length,
+      d.win_rate ?? "",
+      d.risk ? d.risk.score : "",
+      firstAlertId,
+    ].join("|");
+    const unchanged = lastDrawerAddr === addr && lastDrawerStamp === stamp;
+    if (unchanged) return;
+    lastDrawerAddr = addr;
+    lastDrawerStamp = stamp;
     $("#d-label").textContent = d.label;
     $("#d-addr").textContent = d.address;
     $("#d-addr").href = `https://hyperdash.info/trader/${d.address}`;
