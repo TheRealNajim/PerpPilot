@@ -1,0 +1,46 @@
+PERPPILOT — X THREAD (Option C)
+Attach notes at the bottom. Post tweets in order as a thread (use the + button on your own tweet).
+
+==================== TWEET 1/4 — main (attach: brag-output/brag.mp4) ====================
+
+PerpPilot: a copy-trading co-pilot for Hyperliquid perps, built on the @nansen_ai API.
+
+It finds the smart money, scores who's worth copying, and pings you when a whale blinks.
+
+One watchlist whale: long $10.9M of ZEC. Tracked live.
+
+https://github.com/TheRealNajim/PerpPilot #MeridianBuildathon
+
+==================== TWEET 2/4 — how it works (attach: docs/screenshot-dashboard.png) ====================
+
+How it works:
+
+The Discover tab ranks the top Hyperliquid perps traders of the past week from Nansen's Smart HL Perps Trader cohort.
+
+One click tracks any wallet. PerpPilot then pulls 30 days of trade history and computes win rate, profit factor, equity curve and a 0-100 Copy Score — plus a live risk score from leverage, liquidation distance, concentration and margin.
+
+==================== TWEET 3/4 — the alert layer ====================
+
+The payoff is the alert layer.
+
+It polls live positions and fires the moment a tracked whale opens, closes, flips, adds, reduces — or drifts near liquidation.
+
+And when 2+ tracked traders take the same side within 15 minutes? Flock signal. On screen, or straight to your phone via Telegram/Discord webhook.
+
+==================== TWEET 4/4 — demo + repo (attach: docs/demo-video.mp4) ====================
+
+Full 60s narrated walkthrough attached — discover, track, scores, alerts, all live on Nansen data.
+
+Everything is open source, built for the Meridian Buildathon:
+
+https://github.com/TheRealNajim/PerpPilot
+
+Thanks to @nansen_ai for the data layer.
+
+==================== ATTACHMENT NOTES ====================
+
+- Tweet 1: attach brag-output/brag.mp4 (native upload — the poster frame is baked in as the thumbnail)
+- Tweet 2: attach docs/screenshot-dashboard.png
+- Tweet 4: attach docs/demo-video.mp4 (the 63s narrated screen demo)
+- Post only after the API call counter crosses 1,000 if you want to claim "1,000+ Nansen API calls" — or add that line to Tweet 2 once true (it auto-pauses at 1,050)
+- Both buildathon requirements are covered: @nansen_ai tagged (tweets 1 and 4) + repo link (tweets 1 and 4)

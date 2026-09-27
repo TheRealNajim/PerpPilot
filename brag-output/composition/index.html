@@ -309,11 +309,18 @@
   spark.style.strokeDashoffset = sparkLen;
 
   var trackBtn = document.getElementById("track-btn-1");
-  var btnRect = trackBtn.getBoundingClientRect();
-  var cursorTargetX = Math.round(btnRect.left + btnRect.width / 2 - 15);
-  var cursorTargetY = Math.round(btnRect.top + btnRect.height / 2 - 10);
-  var ringTargetX = Math.round(btnRect.left + btnRect.width / 2 - 9);
-  var ringTargetY = Math.round(btnRect.top + btnRect.height / 2 - 9);
+  function layoutPos(el) {
+    var x = 0, y = 0, n = el;
+    while (n && n !== document.body) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    return { x: x, y: y };
+  }
+  var btnPos = layoutPos(trackBtn);
+  var btnCx = btnPos.x + trackBtn.offsetWidth / 2;
+  var btnCy = btnPos.y + trackBtn.offsetHeight / 2;
+  var cursorTargetX = Math.round(btnCx - 6);
+  var cursorTargetY = Math.round(btnCy - 4);
+  var ringTargetX = Math.round(btnCx - 9);
+  var ringTargetY = Math.round(btnCy - 9);
 
   var frames = window.AUDIO_DATA && window.AUDIO_DATA.frames ? window.AUDIO_DATA.frames : [];
   var fps = window.AUDIO_DATA ? window.AUDIO_DATA.fps : 30;
